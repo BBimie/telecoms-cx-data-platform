@@ -8,16 +8,16 @@ from scripts.common.util import get_existing_files
 
 # Let's check the root first to find the folder name
 SOURCE_DATA_LAKE = Constant.SOURCE_DATA_LAKE
-SOURCE_FOLDER = "call logs/"
+SOURCE_FOLDER = "social_medias/"
 DESTINATION_DATA_LAKE = Constant.DESTINATION_DATA_LAKE
-DESTINATION_FOLDER = "raw/call_center_logs/"
+DESTINATION_FOLDER = "raw/social_media/"
 
 
-def extract_call_center_logs():
+def extract_social_media_complaint():
     source_client = AWSClient().get_source_s3_client()
-    destination_s3_client = AWSClient().local_s3()
+    destination_s3_client = AWSClient().local_s3
 
-    print(f"Starting Incremental Ingestion: Call Center Logs")
+    print(f"Starting Incremental Ingestion: Social Media Complaints")
 
     try:
         # GET ALREADY PROCESSED FILES
@@ -34,6 +34,7 @@ def extract_call_center_logs():
             Bucket=Constant.SOURCE_DATA_LAKE, 
             Prefix=SOURCE_FOLDER
         )
+        print(response)
         
         #loop through all the dictionaries in Contents and get 'Key'
         new_files_count = 0
@@ -41,8 +42,8 @@ def extract_call_center_logs():
         for item in response['Contents']:
             file_key = item['Key']
             
-            #skip non-csv files
-            if not file_key.endswith('.csv'):
+            #skip non-json files
+            if not file_key.endswith('.json'):
                 continue
 
             # Check if we already have this file
@@ -53,17 +54,17 @@ def extract_call_center_logs():
                 #skip file, it has been previously ingested
                 continue
 
-            #read csv
-            print(f"Reading: {file_key} ...")
-            csv_obj = source_client.get_object(Bucket=Constant.SOURCE_DATA_LAKE, Key=file_key)
-            df = pd.read_csv(io.BytesIO(csv_obj['Body'].read()))
+            #read json
+            print(f"Reading: {file_key}")
+            json_obj = source_client.get_object(Bucket=Constant.SOURCE_DATA_LAKE, Key=file_key)
+            df = pd.read_json(io.BytesIO(json_obj['Body'].read()))
 
             # add metadata
             df['_data_load_time'] = datetime.now()
             df['_source_file'] = os.path.basename(file_key)
 
             # write data to parquet
-            file_name = os.path.basename(file_key).replace('.csv', '.parquet')
+            file_name = os.path.basename(file_key).replace('.json', '.parquet')
             DESTINATION_KEY = f"{DESTINATION_FOLDER}{file_name}"
             
             print(f"-> Writing to {DESTINATION_KEY}")
@@ -80,38 +81,7 @@ def extract_call_center_logs():
 
             new_files_count += 1
         
-        print(f"All {new_files_count} call logs data ingested successfully!")
+        print(f"All {new_files_count} social media complaints data ingested successfully!")
 
     except Exception as e:
-        print(f"Could not get call center logs, {e}")
-
-
-# def delete_folder():
-#     s3 = AWSClient().local_s3
-
-#     print(f"DELETING all files in: s3://{DESTINATION_DATA_LAKE}/{DESTINATION_FOLDER}")
-
-#     # 1. List all objects in the folder
-#     # S3 doesn't have "folders", so we find everything starting with the prefix
-#     paginator = s3.get_paginator('list_objects_v2')
-#     pages = paginator.paginate(Bucket=DESTINATION_DATA_LAKE, Prefix=DESTINATION_FOLDER)
-
-#     deleted_count = 0
-
-#     for page in pages:
-#         if 'Contents' in page:
-#             objects_to_delete = [{'Key': obj['Key']} for obj in page['Contents']]
-            
-#             # 2. Delete in batches (Efficient)
-#             if objects_to_delete:
-#                 print(f"   ...Deleting batch of {len(objects_to_delete)} files...")
-#                 s3.delete_objects(
-#                     Bucket=DESTINATION_DATA_LAKE,
-#                     Delete={'Objects': objects_to_delete}
-#                 )
-#                 deleted_count += len(objects_to_delete)
-
-#     if deleted_count > 0:
-#         print(f"✅ Successfully deleted {deleted_count} files.")
-#     else:
-#         print("Folder was already empty.")
+        print(f"Could not get social media complaints data, {e}")
