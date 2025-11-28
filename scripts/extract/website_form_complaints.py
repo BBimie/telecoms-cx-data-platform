@@ -59,7 +59,7 @@ def extract_web_form_complaints():
 
             # #pushing to datalake 
             print(f"Pushing to {DESTINATION_DATA_LAKE}")
-            AWSClient().local_s3.put_object(
+            destination_s3_client.put_object(
                 Bucket=DESTINATION_DATA_LAKE,
                 Key=DESTINATION_KEY,
                 Body=out_buffer.getvalue()
@@ -68,3 +68,7 @@ def extract_web_form_complaints():
             new_tables_count += 1
         
         print(f"Successfully ingested {new_tables_count} new tables from website form complaints databases")
+
+
+if __name__ == "__main__":
+    extract_web_form_complaints()

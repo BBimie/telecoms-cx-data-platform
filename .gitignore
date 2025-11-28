@@ -8,3 +8,6 @@ __pycache__/
 *.tfvars
 .terraform.lock.hcl
 google_secret.json
+logs
+config
+plugins

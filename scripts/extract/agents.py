@@ -10,6 +10,7 @@ from scripts.connection.aws import AWSClient
 SOURCE_AGENTS_SHEET_ID  = Constant.SOURCE_AGENTS_SHEET_ID
 DESTINATION_DATA_LAKE = Constant.DESTINATION_DATA_LAKE
 DESTINATION_AGENT_KEY = "raw/agents/agents.parquet"
+GOOGLE_CREDENTIALS_PATH= Constant.GOOGLE_JSON_PATH
 
 def extract_agents_data():
 	""" Method to connect to google sheet and fetch agents data."""
@@ -20,7 +21,7 @@ def extract_agents_data():
 	try:
 		#intialize gspread
 		print('Initializing gspread client')
-		gc_client = gspread.service_account('google_secret.json')
+		gc_client = gspread.service_account(GOOGLE_CREDENTIALS_PATH)
 
 		#open sheet
 		print("Open Agents Google sheet")
@@ -57,4 +58,6 @@ def extract_agents_data():
 		print(f"Could not get agent data, {e}")
 
 
-# extract_agents_data()
+if __name__ == "__main__":
+    # YOU MUST CALL THE FUNCTION HERE
+    extract_agents_data()

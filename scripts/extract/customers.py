@@ -1,5 +1,3 @@
-import sys
-import os
 import io
 import pandas as pd
 from datetime import datetime
@@ -14,8 +12,9 @@ def extract_customer_data():
     aws = AWSClient()
     source_client = aws.get_source_s3_client()
     try:
-        print(f"Reading from Customer data from source")
-        obj = source_client.get_object(Bucket=Constant.SOURCE_DATA_LAKE, Key=CUSTOMER_DATA_SOURCE_KEY)
+        print(f"Reading from Customer data from source, {Constant.SOURCE_DATA_LAKE} ")
+        obj = source_client.get_object(Bucket=Constant.SOURCE_DATA_LAKE, 
+                                       Key=CUSTOMER_DATA_SOURCE_KEY)
         df = pd.read_csv(io.BytesIO(obj['Body'].read()))
 
         print(f"Customer data columns: {df.columns}")
@@ -30,14 +29,14 @@ def extract_customer_data():
         out_buffer = io.BytesIO()
         df.to_parquet(out_buffer, index=False)
         
-        # aws.local_s3.put_object(
-        #     Bucket=Constant.DESTINATION_DATA_LAKE,
-        #     Key=DESTINATION_KEY,
-        #     Body=out_buffer.getvalue()
-        # )
+        aws.local_s3.put_object(
+            Bucket=Constant.DESTINATION_DATA_LAKE,
+            Key=DESTINATION_KEY,
+            Body=out_buffer.getvalue()
+        )
         print("Ingestion Complete!")
     except Exception as e:
         print(f"Could not ingest customer data, {e}")
 
-# if __name__ == "__main__":
-#     ingest_customers()
+if __name__ == "__main__":
+    extract_customer_data()

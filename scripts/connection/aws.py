@@ -1,5 +1,5 @@
 import boto3
-
+from scripts.common.constant import Constant
 class AWSClient:
     def __init__(self, region="eu-north-1"):
         self.region = region
@@ -28,13 +28,17 @@ class AWSClient:
             return self._source_s3_client
 
         print("Authenticating with Source Account...")
-        access_key = self.get_secret('/coretelecoms/source/access_key')
-        secret_key = self.get_secret('/coretelecoms/source/secret_key')
-
-        self._source_s3_client = boto3.client(
-            's3',
-            aws_access_key_id=access_key,
-            aws_secret_access_key=secret_key,
-            region_name=self.region
-        )
-        return self._source_s3_client
+        access_key = Constant.SOURCE_AWS_ACCESS_KEY_ID
+        secret_key = Constant.SOURCE_AWS_SECRET_ACCESS_KEY
+        try:
+            self._source_s3_client = boto3.client(
+                's3',
+                aws_access_key_id=access_key,
+                aws_secret_access_key=secret_key,
+                region_name=self.region
+            )
+            return self._source_s3_client
+        
+        except Exception as e:
+            print(f"Error authenticating with Source Account: {e}")
+            raise e

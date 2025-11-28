@@ -73,7 +73,7 @@ def extract_social_media_complaint():
 
             #pushing to datalake 
             print(f"Pushing to {DESTINATION_DATA_LAKE}")
-            AWSClient().local_s3.put_object(
+            destination_s3_client.put_object(
                 Bucket=DESTINATION_DATA_LAKE,
                 Key=DESTINATION_KEY,
                 Body=out_buffer.getvalue()
@@ -85,3 +85,6 @@ def extract_social_media_complaint():
 
     except Exception as e:
         print(f"Could not get social media complaints data, {e}")
+
+if __name__ == "__main__":
+    extract_social_media_complaint()

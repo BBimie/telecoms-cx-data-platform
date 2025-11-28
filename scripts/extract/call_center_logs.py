@@ -15,7 +15,7 @@ DESTINATION_FOLDER = "raw/call_center_logs/"
 
 def extract_call_center_logs():
     source_client = AWSClient().get_source_s3_client()
-    destination_s3_client = AWSClient().local_s3()
+    destination_s3_client = AWSClient().local_s3
 
     print(f"Starting Incremental Ingestion: Call Center Logs")
 
@@ -72,7 +72,7 @@ def extract_call_center_logs():
 
             #pushing to datalake 
             print(f"Pushing to {DESTINATION_DATA_LAKE}")
-            AWSClient().local_s3.put_object(
+            destination_s3_client.put_object(
                 Bucket=DESTINATION_DATA_LAKE,
                 Key=DESTINATION_KEY,
                 Body=out_buffer.getvalue()
@@ -85,33 +85,6 @@ def extract_call_center_logs():
     except Exception as e:
         print(f"Could not get call center logs, {e}")
 
-
-# def delete_folder():
-#     s3 = AWSClient().local_s3
-
-#     print(f"DELETING all files in: s3://{DESTINATION_DATA_LAKE}/{DESTINATION_FOLDER}")
-
-#     # 1. List all objects in the folder
-#     # S3 doesn't have "folders", so we find everything starting with the prefix
-#     paginator = s3.get_paginator('list_objects_v2')
-#     pages = paginator.paginate(Bucket=DESTINATION_DATA_LAKE, Prefix=DESTINATION_FOLDER)
-
-#     deleted_count = 0
-
-#     for page in pages:
-#         if 'Contents' in page:
-#             objects_to_delete = [{'Key': obj['Key']} for obj in page['Contents']]
-            
-#             # 2. Delete in batches (Efficient)
-#             if objects_to_delete:
-#                 print(f"   ...Deleting batch of {len(objects_to_delete)} files...")
-#                 s3.delete_objects(
-#                     Bucket=DESTINATION_DATA_LAKE,
-#                     Delete={'Objects': objects_to_delete}
-#                 )
-#                 deleted_count += len(objects_to_delete)
-
-#     if deleted_count > 0:
-#         print(f"✅ Successfully deleted {deleted_count} files.")
-#     else:
-#         print("Folder was already empty.")
+if __name__ == "__main__":
+    extract_call_center_logs()
+    
