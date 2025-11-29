@@ -10,3 +10,4 @@ gspread
 sqlalchemy
 apache-airflow-providers-standard
 dbt-snowflake
+snowflake-connector-python

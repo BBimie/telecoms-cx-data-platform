@@ -36,4 +36,11 @@ with DAG(
         bash_command='export PYTHONPATH=/opt/airflow && python /opt/airflow/scripts/extract/social_media_complaints.py'
     )
 
-    [t3_call_logs, t4_web_forms, t5_social_media]
+    # Loading INTO SNOWFLAKE
+    #RUNS AFTER INGESTION
+    t5_load_snowflake = BashOperator(
+        task_id='load_raw_to_snowflake',
+        bash_command='export PYTHONPATH=/opt/airflow && python /opt/airflow/scripts/load/load_raw_to_snowflake.py'
+    )
+
+    [t3_call_logs, t4_web_forms, t5_social_media] >> t5_load_snowflake
