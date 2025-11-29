@@ -177,3 +177,51 @@ resource "aws_iam_user_policy_attachment" "attach_pipeline_policy" {
   user       = aws_iam_user.airflow_service_user.name
   policy_arn = aws_iam_policy.pipeline_policy.arn
 }
+
+
+# 4. Snowflake Integration IAM Role
+
+resource "aws_iam_role" "snowflake_role" {
+  name = "coretelecoms_snowflake_role"
+
+  #Initial Trust Policy (Placeholder)
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Principal = {
+          AWS = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
+        }
+        Action = "sts:AssumeRole"
+      }
+    ]
+  })
+}
+
+# Allow this Role to Read/List Data Lake
+resource "aws_iam_role_policy" "snowflake_access" {
+  name = "snowflake_s3_access"
+  role = aws_iam_role.snowflake_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "s3:GetObject",
+          "s3:GetObjectVersion",
+          "s3:ListBucket"
+        ]
+        Resource = [
+          "${aws_s3_bucket.data_lake.arn}",      # The Bucket
+          "${aws_s3_bucket.data_lake.arn}/*"    # All files inside
+        ]
+      }
+    ]
+  })
+}
+
+# get aws account ID
+data "aws_caller_identity" "current" {}
