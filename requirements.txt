@@ -9,3 +9,4 @@ google-auth
 gspread
 sqlalchemy
 apache-airflow-providers-standard
+dbt-snowflake
