@@ -1,0 +1,13 @@
+venv
+__pycache__/
+*.pyc
+.env
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+.terraform.lock.hcl
+google_secret.json
+logs
+config
+plugins
