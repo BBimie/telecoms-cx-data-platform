@@ -10,7 +10,7 @@ from datetime import datetime
 import io
 
 DESTINATION_DATA_LAKE = Constant.DESTINATION_DATA_LAKE
-DESTINATION_FOLDER = "website_form_complaints/"
+DESTINATION_FOLDER = "raw/website_form_complaints/"
 db_engine = PostgresConnection().website_forms_engine()
 db_schema = AWSClient().get_secret(param_name='/coretelecoms/db/schema')
 
