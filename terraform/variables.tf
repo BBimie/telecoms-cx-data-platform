@@ -13,8 +13,15 @@ variable "environment" {
   default     = "dev"
 }
 
-variable "gcp_project_id" {
-  description = "The ID of the Google Cloud Project"
-  type        = string
-  default     = "root-logic-479318-d0"
+variable "gcp_project_id" {}
+
+variable "snowflake_organization_name" {}
+variable "snowflake_account_name" {}
+variable "snowflake_user" {}
+variable "snowflake_password" { sensitive = true }
+variable "snowflake_role" { default = "ACCOUNTADMIN" }
+
+variable "snowflake_db_name" {
+  description = "Name of the Snowflake Database"
+  default     = "CORE_TELECOMS"
 }
