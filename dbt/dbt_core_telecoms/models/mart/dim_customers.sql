@@ -9,7 +9,6 @@ SELECT
     email,
     address,
     date_of_birth,
-    age,
     signup_date,
     -- Business Logic: 'Tenure' (How many days have they been a customer?)
     DATEDIFF(day, signup_date, CURRENT_DATE()) AS tenure_days,

@@ -5,7 +5,7 @@ WITH agents AS (
 SELECT
     agent_id,
     agent_name,
-    experience_level,
+    experience,
     state AS agent_location,
     source_extracted_at,
     snowflake_loaded_at
