@@ -1,0 +1,34 @@
+version: 2
+
+models:
+  - name: dim_customers
+    columns:
+      - name: customer_id
+        tests:
+          - unique
+          - not_null
+
+  - name: dim_agents
+    columns:
+      - name: agent_id
+        tests:
+          - unique
+          - not_null
+
+  - name: fct_customer_complaints
+    columns:
+      - name: interaction_id
+        tests:
+          - unique
+          - not_null
+      
+      # Ensure every complaint links to a valid Customer Profile
+      - name: customer_id
+        tests:
+          - relationships:
+              arguments:
+                to: ref('dim_customers')
+                field: customer_id
+                # Warn on social media possible mismatches
+              config:
+                severity: warn
