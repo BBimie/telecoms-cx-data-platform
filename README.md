@@ -5,11 +5,74 @@
 
 **CoreTelecoms** is facing a customer retention crisis due to siloed data across Call Centers, Website Forms, and Social Media. This project implements a production-grade Modern Data Platform to unify these disparate sources into a Single Source of Truth, enabling analytics on Customer Churn and Agent Performance.
 
-This platform automates the End-to-End lifecycle: **Ingestion** $\rightarrow$ **Data Lake** $\rightarrow$ **Warehouse** $\rightarrow$ **Transformation** $\rightarrow$ **Data Quality**.
+This platform automates the End-to-End lifecycle: 
+**Ingestion** $\rightarrow$ **Data Lake** $\rightarrow$ **Warehouse** $\rightarrow$ **Transformation** $\rightarrow$ **Data Quality**.
 
 ## Architecture
 The platform follows a Lakehouse Architecture using the ELT (Extract, Load, Transform) pattern.
-(Place your architecture diagram here. You can draw one using draw.io exporting as png)ShutterstockExplore
+
+graph TD
+    %% -- SOURCES --
+    subgraph Sources
+        S3_Source[("AWS S3 Source\n(CSV, JSON)")]
+        GSheets[("Google Sheets\n(Agents)")]
+        Postgres[("Postgres DB\n(Web Forms)")]
+    end
+
+    %% -- INGESTION --
+    subgraph Orchestration ["Orchestration (Airflow & Docker)"]
+        direction TB
+        Airflow[("Apache Airflow")]
+        Python_Extract["Python Extraction Scripts"]
+        Python_Load["Python Loader Scripts"]
+        Airflow --> Python_Extract
+        Airflow --> Python_Load
+    end
+
+    %% -- DATA LAKE --
+    subgraph DataLake ["Data Lake (AWS S3)"]
+        Bronze[("Bronze Layer\n(Raw Parquet)")]
+    end
+
+    %% -- DATA WAREHOUSE --
+    subgraph Warehouse ["Data Warehouse (Snowflake)"]
+        Raw_DB[("RAW Schema\n(Variant/JSON)")]
+        Staging_DB[("STAGING Schema\n(Cleaned/Views)")]
+        Marts_DB[("MARTS Schema\n(Star Schema)")]
+    end
+
+    %% -- TRANSFORMATION --
+    subgraph Transformation ["Transformation (dbt)"]
+        dbt_Test["dbt Tests\n(Quality Checks)"]
+        dbt_Run["dbt Models"]
+    end
+
+    %% -- CI/CD --
+    subgraph DevOps ["CI/CD & Infra"]
+        GitHub["GitHub Actions"]
+        Terraform["Terraform\n(IaC)"]
+        DockerHub["Docker Hub"]
+    end
+
+    %% -- FLOWS --
+    S3_Source -->|Boto3| Python_Extract
+    GSheets -->|GSpread| Python_Extract
+    Postgres -->|SQLAlchemy| Python_Extract
+
+    Python_Extract -->|Write Parquet| Bronze
+    Bronze -->|COPY INTO| Raw_DB
+    
+    Raw_DB --> dbt_Run
+    dbt_Run --> Staging_DB
+    Staging_DB --> Marts_DB
+    Marts_DB --> dbt_Test
+
+    %% -- DEVOPS FLOWS --
+    GitHub -->|Lint & Build| DockerHub
+    DockerHub -->|Pull Image| Airflow
+    Terraform -->|Provision| DataLake
+    Terraform -->|Provision| Warehouse
+
 
 ## Data Flow
 
