@@ -7,7 +7,7 @@ renamed AS (
         "data":"call ID"::varchar(50) AS call_id,
         "data":"customeR iD"::varchar(50) AS customer_id,
         "data":"agent ID"::int AS agent_id,
-        "data":"COMPLAINT_catego ry"::varchar(100) AS complaint_topic,
+        "data":"COMPLAINT_catego ry"::varchar(100) AS complaint_category,
         "data":resolutionstatus::varchar(50) AS resolution_status,
         "data":call_start_time::timestamp AS call_start_time,
         "data":call_end_time::timestamp AS call_end_time,
