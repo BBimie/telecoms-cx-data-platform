@@ -1,0 +1,62 @@
+version: 2
+
+models:
+  # CUSTOMERS
+  - name: stg_customers
+    description: "Cleaned list of customers from S3 PARQUET"
+    columns:
+      - name: customer_id
+        description: "Primary Key"
+        tests:
+          - unique
+          - not_null
+          
+
+  
+  # 2. AGENTS
+  
+  - name: stg_agents
+    description: "List of support agents from Google Sheets"
+    columns:
+      - name: agent_id
+        tests:
+          - unique
+          - not_null
+
+  
+  # 3. CALL LOGS
+  
+  - name: stg_call_logs
+    description: "Daily call logs from S3"
+    columns:
+      - name: call_id
+        tests:
+          - unique
+          - not_null
+      
+      # RELATIONSHIP TEST: Ensure every call belongs to a real customer
+      - name: customer_id
+        tests:
+          - not_null
+          - relationships:
+              to: ref('stg_customers')
+              field: customer_id
+
+      # RELATIONSHIP TEST: Ensure every call was handled by a real agent
+      - name: agent_id
+        tests:
+          - not_null
+          - relationships:
+              to: ref('stg_agents')
+              field: agent_id
+
+  
+  # 4. WEB FORMS
+  
+  - name: stg_web_forms
+    description: "Web complaints from Postgres"
+    columns:
+      - name: request_id
+        tests:
+          - unique
+          - not_null
