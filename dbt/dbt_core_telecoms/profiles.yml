@@ -3,11 +3,11 @@ core_telecoms:
   outputs:
     dev:
       type: snowflake
-      account: "{{ env_var('SNOWFLAKE_ACCOUNT') }}" # Org-Account format
+      account: "{{ env_var('SNOWFLAKE_ACCOUNT') }}" # organisation-account
       user: "{{ env_var('SNOWFLAKE_USER') }}"
       password: "{{ env_var('SNOWFLAKE_PASSWORD') }}"
       role: "{{ env_var('SNOWFLAKE_ROLE') }}"
-      warehouse: "CORE_TELECOMS_WH"
-      database: "CORE_TELECOMS"
+      warehouse: "{{ env_var('SNOWFLAKE_WAREHOUSE') }}"
+      database: "{{ env_var('CORETELECOMS_DATABASE') }}"
       schema: "STAGING" # Default schema for runs
       threads: 4

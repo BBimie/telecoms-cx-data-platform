@@ -80,3 +80,84 @@ resource "snowflake_stage" "raw_stage" {
   url                 = "s3://${var.data_lake_bucket_name}/raw/"
   file_format         = "FORMAT_NAME = ${snowflake_database.core_telecoms.name}.${snowflake_schema.raw.name}.${snowflake_file_format.parquet_format.name}"
 }
+
+
+# LOADING DATA INTO SNOWFLAKE
+# CREATE RAW TABLES THAT IS ABLE TO ACCEPT ALL THE DATA WITH NOT ISSUE BY SETTING TYPE TO VARIANT
+# 8. RAW Tables
+
+# a. CUSTOMERS DATA
+resource "snowflake_table" "customers_raw" {
+  database = snowflake_database.core_telecoms.name
+  schema   = snowflake_schema.raw.name
+  name     = "CUSTOMERS"
+  column {
+    name = "data"
+    type = "VARIANT" # Holds the whole Parquet row
+  }
+  column {
+    name = "snowflake_load_time"
+    type = "TIMESTAMP_NTZ"
+    nullable = true
+  }
+}
+
+# b. AGENTS
+resource "snowflake_table" "agents_raw" {
+  database = snowflake_database.core_telecoms.name
+  schema   = snowflake_schema.raw.name
+  name     = "AGENTS"
+  column {
+    name = "data"
+    type = "VARIANT"
+  }
+  column {
+    name = "snowflake_load_time"
+    type = "TIMESTAMP_NTZ"
+  }
+}
+
+# c. CALL LOGS
+resource "snowflake_table" "call_logs_raw" {
+  database = snowflake_database.core_telecoms.name
+  schema   = snowflake_schema.raw.name
+  name     = "CALL_CENTER_LOGS"
+  column {
+    name = "data"
+    type = "VARIANT"
+  }
+  column {
+    name = "snowflake_load_time"
+    type = "TIMESTAMP_NTZ"
+  }
+}
+
+# d. WEB FORMS
+resource "snowflake_table" "web_forms_raw" {
+  database = snowflake_database.core_telecoms.name
+  schema   = snowflake_schema.raw.name
+  name     = "WEBSITE_FORMS"
+  column {
+    name = "data"
+    type = "VARIANT"
+  }
+  column {
+    name = "snowflake_load_time"
+    type = "TIMESTAMP_NTZ"
+  }
+}
+
+# d. SOCIAL MEDIA
+resource "snowflake_table" "social_media_raw" {
+  database = snowflake_database.core_telecoms.name
+  schema   = snowflake_schema.raw.name
+  name     = "SOCIAL_MEDIA"
+  column {
+    name = "data"
+    type = "VARIANT"
+  }
+  column {
+    name = "snowflake_load_time"
+    type = "TIMESTAMP_NTZ"
+  }
+}

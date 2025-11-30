@@ -1,0 +1,95 @@
+version: 2
+
+models:
+
+  # 1. CUSTOMERS
+  - name: stg_customers
+    description: "Cleaned list of customers from customers.csv"
+    columns:
+      - name: customer_id
+        description: "Primary Key"
+        data_tests:
+          - unique
+          - not_null
+
+
+  # 2. AGENTS
+
+  - name: stg_agents
+    description: "List of support agents from Google Sheets"
+    columns:
+      - name: agent_id
+        data_tests:
+          - unique
+          - not_null
+
+
+  # 3. CALL LOGS
+
+  - name: stg_call_center_logs
+    description: "Daily call logs from S3"
+    columns:
+      - name: call_id
+        data_tests:
+          - unique
+          - not_null
+
+      # FK to customers
+      - name: customer_id
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_customers')
+                field: customer_id
+
+      # FK TO agents
+      - name: agent_id
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_agents')
+                field: agent_id
+
+
+  # 4. WEB FORMS
+
+  - name: stg_website_forms
+    description: "Web complaints from Postgres"
+    columns:
+      - name: request_id
+        data_tests:
+          - unique
+          - not_null
+
+
+  # 5. SOCIAL MEDIA
+
+  - name: stg_social_media
+    description: "Complains from social media S3"
+    columns:
+      - name: complaint_id
+        data_tests:
+          - unique
+          - not_null
+
+      # FK to customers (With Warning Config)
+      - name: customer_id
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_customers')
+                field: customer_id
+              config:
+                severity: warn
+
+      # FK TO agents
+      - name: agent_id
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_agents')
+                field: agent_id
