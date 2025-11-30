@@ -1,0 +1,12 @@
+version: 2
+
+sources:
+  - name: raw_data
+    database: CORE_TELECOMS
+    schema: RAW
+    tables:
+      - name: CUSTOMERS
+      - name: AGENTS
+      - name: CALL_CENTER_LOGS
+      - name: WEBSITE_FORMS
+      - name: SOCIAL_MEDIA
