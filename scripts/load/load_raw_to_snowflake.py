@@ -51,5 +51,5 @@ if __name__ == "__main__":
     for table, folder in mappings.items():
         copy_data_from_s3_to_snowflake(table, 
                                        folder, 
-                                       database='CORE_TELECOMS', 
+                                       database=Constant.CORETELECOMS_DATABASE, 
                                        schema='RAW')
