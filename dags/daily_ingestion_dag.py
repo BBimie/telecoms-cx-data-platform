@@ -43,4 +43,17 @@ with DAG(
         bash_command='export PYTHONPATH=/opt/airflow && python /opt/airflow/scripts/load/load_raw_to_snowflake.py'
     )
 
-    [t3_call_logs, t4_web_forms, t5_social_media] >> t5_load_snowflake
+    # transform (dbt)
+    t6_dbt_run = BashOperator(
+        task_id='dbt_run',
+        bash_command='cd /opt/airflow/dbt/dbt_core_telecoms && dbt run --profiles-dir .'
+    )
+
+    # test dbt - Optional but recommended
+    # This runs your schema tests not null, unique
+    t7_dbt_test = BashOperator(
+        task_id='dbt_test',
+        bash_command='cd /opt/airflow/dbt/dbt_core_telecoms && dbt test --profiles-dir .'
+    )
+
+    [t3_call_logs, t4_web_forms, t5_social_media] >> t5_load_snowflake >> t6_dbt_run >> t7_dbt_test
