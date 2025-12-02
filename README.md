@@ -1,77 +1,15 @@
-# CoreTelecoms: Unified Customer Experience Data Platform
+# CoreTelecoms: Customer Experience Data Platform
 
 ## Project Overview
 
-
-**CoreTelecoms** is facing a customer retention crisis due to siloed data across Call Centers, Website Forms, and Social Media. This project implements a production-grade Modern Data Platform to unify these disparate sources into a Single Source of Truth, enabling analytics on Customer Churn and Agent Performance.
+**CoreTelecoms** faces a customer retention challenge due to fragmented data across Call Centers, Website Forms, and Social Media. This project implements a Modern Data Platform to unify these disparate sources into a Single Source of Truth.
 
 This platform automates the End-to-End lifecycle: 
-**Ingestion** $\rightarrow$ **Data Lake** $\rightarrow$ **Warehouse** $\rightarrow$ **Transformation** $\rightarrow$ **Data Quality**.
+
+**Ingestion** $\rightarrow$ **Data Lake** $\rightarrow$ **Warehouse** $\rightarrow$ **Transformation**
 
 ## Architecture
-The platform follows a Lakehouse Architecture using the ELT (Extract, Load, Transform) pattern.
-
-graph TD
-    %% -- SOURCES --
-    subgraph Sources
-        S3_Source[("AWS S3 Source\n(CSV, JSON)")]
-        GSheets[("Google Sheets\n(Agents)")]
-        Postgres[("Postgres DB\n(Web Forms)")]
-    end
-
-    %% -- INGESTION --
-    subgraph Orchestration ["Orchestration (Airflow & Docker)"]
-        direction TB
-        Airflow[("Apache Airflow")]
-        Python_Extract["Python Extraction Scripts"]
-        Python_Load["Python Loader Scripts"]
-        Airflow --> Python_Extract
-        Airflow --> Python_Load
-    end
-
-    %% -- DATA LAKE --
-    subgraph DataLake ["Data Lake (AWS S3)"]
-        Bronze[("Bronze Layer\n(Raw Parquet)")]
-    end
-
-    %% -- DATA WAREHOUSE --
-    subgraph Warehouse ["Data Warehouse (Snowflake)"]
-        Raw_DB[("RAW Schema\n(Variant/JSON)")]
-        Staging_DB[("STAGING Schema\n(Cleaned/Views)")]
-        Marts_DB[("MARTS Schema\n(Star Schema)")]
-    end
-
-    %% -- TRANSFORMATION --
-    subgraph Transformation ["Transformation (dbt)"]
-        dbt_Test["dbt Tests\n(Quality Checks)"]
-        dbt_Run["dbt Models"]
-    end
-
-    %% -- CI/CD --
-    subgraph DevOps ["CI/CD & Infra"]
-        GitHub["GitHub Actions"]
-        Terraform["Terraform\n(IaC)"]
-        DockerHub["Docker Hub"]
-    end
-
-    %% -- FLOWS --
-    S3_Source -->|Boto3| Python_Extract
-    GSheets -->|GSpread| Python_Extract
-    Postgres -->|SQLAlchemy| Python_Extract
-
-    Python_Extract -->|Write Parquet| Bronze
-    Bronze -->|COPY INTO| Raw_DB
-    
-    Raw_DB --> dbt_Run
-    dbt_Run --> Staging_DB
-    Staging_DB --> Marts_DB
-    Marts_DB --> dbt_Test
-
-    %% -- DEVOPS FLOWS --
-    GitHub -->|Lint & Build| DockerHub
-    DockerHub -->|Pull Image| Airflow
-    Terraform -->|Provision| DataLake
-    Terraform -->|Provision| Warehouse
+![CoreTelecoms Architecture Diagram](assets/ARD.png)
 
 
 ## Data Flow
@@ -84,16 +22,19 @@ graph TD
 6. **CI/CD**: GitHub Actions performs **linting** and auto-deploys the Airflow Docker image to **Docker Hub**. 
 
 ## Tech Stack
-Category  Technology  Usage  
-Cloud Provider AWS (Stockholm Region) S3 (Lake), IAM (Security), SSM (Secrets) 
-Infrastructure as Code Terraform Provisioning S3, Snowflake DBs, IAM Roles 
-OrchestrationApache Airflow Managing DAGs (Static Setup vs Daily Incremental)
-Containerization Docker & Docker Compose encapsulating the Python runtime
-Data Warehouse Snowflake Storage and Compute for Analytics 
-Transformation dbt (Data Build Tool) Modeling, Testing, and Documentation 
-CI/CD GitHub Actions Linting (Flake8) and Docker Hub Push LanguagesPython, SQL, HCLScripting, Querying, Infrastructure
+| Category | Tool &nbsp;| Purpose_______________|
+|:---|:---|:---|
+| **Cloud Provider**    | AWS | S3 Data Lake, IAM (Security) & SSM (Secrets) |
+| **IaC** | Terraform | Infrastructure Provisioning (S3 Bucket, Snowflake DBs, IAM Roles, Networking) |
+| **Orchestration** | Apache Airflow | Managing DAGs (Static & Daily Incremental) |
+| **Ingestion** | Python | Extraction from S3 buckets, google sheets & databases |
+| **Containerization** | Docker & Docker Compose | encapsulating the Python runtime |
+| **Warehouse** | Snowflake | Storage and Compute Engine |
+| **Transformation** | dbt | Data Modeling, Testing & Documentation |
+| **CI/CD** | GitHub Actions | Automated Deployment to Docker Hub |
 
-Project Structure
+
+## Project Structure
 ```
     ├── dags/                        # Airflow DAGs (Static & Daily pipelines)
     ├── dbt/                         # dbt Project (Models, Tests, Seeds)
@@ -102,39 +43,45 @@ Project Structure
     │   │   └── marts/               # Gold Layer (Dimensional Modeling)         
     │   └── macros/ 
     │       
-    ├── scripts/                     # Python Extraction & Loading Logic
+    ├── scripts/                    
     │   ├── common/                  # Shared Utilities (AWS Client, Config)
     │   ├── extract/                 # Ingestion Scripts (S3, GSheets, Postgres)
     │   └── load/                    # Snowflake Loading Scripts
     │ 
     ├── terraform/ 
-    │     ├── aws.tf                
-    │     ├── gcp.tf           
-    │     └── snowflake.tf   
+    │     ├── aws.tf                 # Setup for S3, IAM & SSM
+    │     ├── gcp.tf                 # Setup service account for gspread
+    │     └── snowflake.tf           # Setup for snowflake wh and networking with aws
     │
-    ├── .github/workflows/           # CI/CD Pipeline Definitions
-    ├── docker-compose.yaml          # Local Airflow Orchestration
+    ├── .github/workflows/           # CI/CD Definition
+    ├── docker-compose.yaml          # Airflow Installation
     ├── Dockerfile                   
     ├── requirements.txt             
     └── README.md                    
 ```
 
 ### Key Features
-1. Robust Data Ingestion
-    - Incremental Loading: The pipeline checks existing files in S3 and only processes new data from Postgres and Call Logs.
-    - Idempotency: Pipelines can be re-run multiple times without creating duplicate data in the Warehouse.
-    - Variant Loading: Data is loaded into Snowflake as VARIANT (JSON) first, making the pipeline resilient to upstream schema changes
+1. **Robust Data Ingestion**
+    - **Incremental Loading**: The pipeline checks existing files in S3 and only processes new data from Postgres and Call Logs.
+    - **Idempotency**: The pipeline can be re-run multiple times without creating duplicate data in the Warehouse.
+    - **Variant Loading**: Data is loaded into Snowflake as VARIANT (JSON) first, making the pipeline resilient to schema changes
 
-2. Medallion Architecture (dbt) 
-    - Bronze (RAW): 1:1 copy of source data.
-    - Silver (STAGING): Cleaned data. Fixes email typos (e.g., gmail.om), parses dates, and standardizes column names.
-    - Gold (MARTS): Star Schema.
-       - `FACT_CUSTOMER_COMPLAINTS`: Unions Call Logs, Web Forms, and Social Media into one view.
+2. **Medallion Architecture (dbt)**
+    - **Bronze (RAW)**: 1:1 copy of source data.
+    - **Silver (STAGING)**: Cleaned data. Fixes email typos (e.g., gmail.om), parses dates, and standardizes column names.
+    - **Gold (MARTS)**: Star Schema.
+       - `FACT_CUSTOMER_COMPLAINTS`: UNIONed all three customer interaction sources (Call, Web, Social) into a single analytical view, normalizing metrics across channels.
        - `DIM_CUSTOMERS`: Master customer profile with calculated tenure_days.
        - `DIM_AGENTS` : Agents data
 
-3. Data Quality & Security
-    - Data Contracts: dbt tests ensure unique IDs, not_null constraints, and referential integrity between Complaints and Customers.
+3. **Data Quality & Security**
+    - **Data Cleaning**:
+        - Customers: Corrected email typos using Regex (e.g., 'GmaiL.om' $\rightarrow$ gmail.com e.t.c).
+        - Web&Social: Handled empty strings in resolution date fields using `TRY_TO_TIMESTAMP`.
+        - Renaming: Standardized messy headers (e.g., 'COMPLAINT_catego ry' $\rightarrow$ complaint_category)
+    
+    - **Data Contracts**: dbt tests to ensure unique IDs, not_null constraints, and referential integrity between Complaints, Customers and Agents
+
     - Security: No hardcoded secrets. All credentials are managed via AWS SSM Parameter Store or injected via .env in Docker.
     
     
@@ -143,12 +90,12 @@ Project Structure
 - Docker & Docker Compose
 - AWS CLI (Configured)
 - Terraform
+- .env
 
 **Step 1: Infrastructure Setup**
 Initialize the cloud resources
 ```bash
     cd terraform
-    # create a terraform.tfvars file with your Snowflake/AWS credentials first
 
     terraform init
     terraform plan
@@ -158,13 +105,30 @@ Initialize the cloud resources
 Create a .env file in the root directory
 
 ```Ini, TOML
-AWS_ACCESS_KEY_ID=your_key
-AWS_SECRET_ACCESS_KEY=your_secret
-AWS_DEFAULT_REGION=eu-north-1
-SNOWFLAKE_ACCOUNT=ORG-ACCOUNT
-SNOWFLAKE_USER=your_user
-SNOWFLAKE_PASSWORD=your_password
-SOURCE_AGENTS_SHEET_ID=your_sheet_id
+AIRFLOW_UID=
+SOURCE_AWS_ACCESS_KEY_ID=
+SOURCE_AWS_SECRET_ACCESS_KEY=
+SOURCE_DATA_LAKE=
+
+SOURCE_AGENTS_SHEET_ID=
+GOOGLE_CREDENTIALS_PATH=
+
+WEBSITE_FORM_DB_NAME=
+WEBSITE_FORM_DB_HOST=
+WEBSITE_FORM_DB_PASSWORD=
+WEBSITE_FORM_DB_USER=
+WEBSITE_FORM_DB_SCHEMA=
+WEBSITE_FORM_DB_PORT=
+
+DESTINATION_DATA_LAKE=
+DESTINATION_AWS_ACCESS_KEY_ID=
+DESTINATION_AWS_SECRET_ACCESS_KEY=
+SNOWFLAKE_USER=
+SNOWFLAKE_PASSWORD=
+SNOWFLAKE_ACCOUNT=
+SNOWFLAKE_WAREHOUSE=
+SNOWFLAKE_ROLE=
+CORETELECOMS_DATABASE=
 ```
 
 **Step 3: Start Airflow**
@@ -178,22 +142,14 @@ Access Airflow at http://localhost:8080 (User/Pass: `airflow`).
 1. Run 01_setup_static_data (Once).
 2. Enable 02_daily_ingestion (Scheduled).
 
-#### Sample Insights (Gold Layer)
+### Insights
 
-**Unified Complaint Analysis:**
-```SQL
-    SELECT
-        source_channel, 
-        COUNT(*) as total_complaints,
-        AVG(handling_time_sec) as avg_resolution_time
-    FROM CORE_TELECOMS.MARTS.FACT_UNIFIED_COMPLAINTS
-    GROUP BY 1;
-```
+I built a simple dashboard using Metabase with the Gold Layer of the Pipeline.
+![CoreTelecoms Dashboard](assets/dashboard.png)
 
-##### Future Improvements
-- Dashboarding: Connect Tableau or PowerBI to the Gold Layer.
-- Alerting: Implement Slack notifications in Airflow for failed tasks.
-- Streaming: Move Social Media ingestion to Kinesis for real-time sentiment analysis.
+#### Recommendation to Management:
+1. Implement Automation: Since volume is high across all complaint categories, deploy a Chatbot or Self-Service Portal to handle L1 tickets (e.g., "Network Failure", "Payments") to free up agents.
 
+2. Focus on Blocked and Backlogged Tickets: Investigate why so many tickets are stuck. Are agents waiting on Engineering? If so, the SLA between Support and Engineering needs review.
 
-Author: Temitope Bimbo Babatola: CDE Capstone Project
+3. Surge Staffing: The backlog is too high. CoreTelecoms needs to hire temporary agents to clear the existing Unresolved queue to bring the ratio to a healthy split.
