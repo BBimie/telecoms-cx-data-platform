@@ -86,8 +86,6 @@ x-airflow-common:
     - ./dbt:/opt/airflow/dbt
     
 
-
-
   user: "${AIRFLOW_UID:-50000}:0"
   depends_on:
     &airflow-common-depends-on
@@ -341,6 +339,23 @@ services:
       <<: *airflow-common-depends-on
       airflow-init:
         condition: service_completed_successfully
+
+  metabase:
+    image: metabase/metabase:latest
+    container_name: core-telecoms-metabase
+    ports:
+      - "3000:3000"
+    environment:
+      - MB_DB_TYPE=postgres
+      - MB_DB_DBNAME=metabase
+      - MB_DB_PORT=5432
+      - MB_DB_USER=airflow
+      - MB_DB_PASS=airflow
+      - MB_DB_HOST=postgres
+    depends_on:
+      - postgres
+    networks:
+      - default
 
 volumes:
   postgres-db-volume:
