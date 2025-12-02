@@ -88,7 +88,8 @@ This platform automates the End-to-End lifecycle:
 ## How to Run Locally 
 **Prerequisites**
 - Docker & Docker Compose
-- AWS CLI (Configured)
+- AWS Service Account
+- GCP Service Account
 - Terraform
 - .env
 
