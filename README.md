@@ -85,13 +85,16 @@ This platform automates the End-to-End lifecycle:
     - Security: No hardcoded secrets. All credentials are managed via AWS SSM Parameter Store or injected via .env in Docker.
     
     
-## How to Run Locally 
+## How to Run
 **Prerequisites**
 - Docker & Docker Compose
-- AWS CLI (Configured)
+- AWS Service Account
+- GCP Service Account
 - Terraform
+- Snowflake
 - .env
 
+### USING GITHUB CODE
 **Step 1: Infrastructure Setup**
 Initialize the cloud resources
 ```bash
@@ -142,9 +145,15 @@ Access Airflow at http://localhost:8080 (User/Pass: `airflow`).
 1. Run `coretelecoms_ingestion_static_1` (Once). (This ingests the customer and agents data, has to be manually triggered)
 2. Enable `coretelecoms_ingestion_daily_1` (Scheduled).
 
+
+### DOCKER HUB REPOSITORY
+Visit https://hub.docker.com/r/bimie/core-telecoms-platform/tags
+
+run `docker pull bimie/core-telecoms-platform:latest` to run the latest version of the pipeline on dockerhub.
+
 ### Insights
 
-I built a simple dashboard using Metabase with the Gold Layer of the Pipeline.
+I built a simple dashboard using Metabase with the Gold Layer of the Pipeline. 
 ![CoreTelecoms Dashboard](assets/dashboard.png)
 
 #### Recommendation to Management:
