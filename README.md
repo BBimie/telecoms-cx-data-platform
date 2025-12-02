@@ -139,8 +139,8 @@ Build the custom image and start the containers.
 ``` 
 **Step 4: Trigger Pipelines**
 Access Airflow at http://localhost:8080 (User/Pass: `airflow`).
-1. Run 01_setup_static_data (Once).
-2. Enable 02_daily_ingestion (Scheduled).
+1. Run `coretelecoms_ingestion_static_1` (Once). (This ingests the customer and agents data, has to be manually triggered)
+2. Enable `coretelecoms_ingestion_daily_1` (Scheduled).
 
 ### Insights
 
