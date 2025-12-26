@@ -32,3 +32,12 @@ models:
                 # Warn on social media possible mismatches
               config:
                 severity: warn
+      - name: agent_id
+        tests:
+          - relationships:
+              arguments:
+                to: ref('dim_agents')
+                field: agent_id
+                # Warn possible mismatches
+              config:
+                severity: warn
