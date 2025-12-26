@@ -138,7 +138,7 @@ CORETELECOMS_DATABASE=
 Build the custom image and start the containers.
 
 ```Bash
-    docker-compose up -d --build
+    docker compose up -d --build
 ``` 
 **Step 4: Trigger Pipelines**
 Access Airflow at http://localhost:8080 (User/Pass: `airflow`).
