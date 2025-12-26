@@ -82,7 +82,7 @@ x-airflow-common:
     - ${AIRFLOW_PROJ_DIR:-.}/config:/opt/airflow/config
     - ${AIRFLOW_PROJ_DIR:-.}/plugins:/opt/airflow/plugins
     - ./scripts:/opt/airflow/scripts
-    - ./google_secret.json:/opt/airflow/google_secret.
+    - ./google_secret.json:/opt/airflow/google_secret.json
     - ./dbt:/opt/airflow/dbt
     
 
@@ -162,7 +162,7 @@ services:
     healthcheck:
       test: ["CMD-SHELL", 'airflow jobs check --job-type DagProcessorJob --hostname "$${HOSTNAME}"']
       interval: 30s
-      timeout: 10s
+      timeout: 120s
       retries: 5
       start_period: 30s
     restart: always

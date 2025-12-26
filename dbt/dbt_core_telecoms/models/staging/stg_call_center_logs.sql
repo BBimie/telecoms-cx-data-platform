@@ -1,8 +1,4 @@
-WITH source AS (
-    SELECT * FROM {{ source('raw_data', 'CALL_CENTER_LOGS') }}
-),
 
-renamed AS (
     SELECT
         "data":"call ID"::varchar(50) AS call_id,
         "data":"customeR iD"::varchar(50) AS customer_id,
@@ -17,7 +13,4 @@ renamed AS (
         TO_TIMESTAMP_NTZ("data":"_data_load_time"::bigint, 6) AS source_extracted_at,
         "snowflake_load_time" AS snowflake_loaded_at
 
-    FROM source
-)
-
-SELECT * FROM renamed
+    FROM {{ source('raw_data', 'CALL_CENTER_LOGS') }} ;

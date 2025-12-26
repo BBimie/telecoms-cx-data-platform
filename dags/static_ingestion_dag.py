@@ -1,10 +1,16 @@
-from airflow import DAG
-from airflow.providers.standard.operators.bash import BashOperator
+from airflow.sdk import DAG
+from airflow.providers.standard.operators.python import PythonOperator
 from datetime import datetime, timedelta
+import sys
+
+sys.path.append('/opt/airflow')
+from scripts.extract.customers import extract_customer_data
+from scripts.extract.agents import extract_agents_data
 
 default_args = {
     'owner': 'airflow',
     'retries': 1,
+    'retry_delay' : timedelta(minutes=5),
 }
 
 #runs the static customer and agent data ingestion once
@@ -19,14 +25,14 @@ with DAG(
 ) as dag:
     
     # The usage remains exactly the same, only the import changed
-    t1_customers = BashOperator(
+    t1_customers = PythonOperator(
         task_id='ingest_customers',
-        bash_command='export PYTHONPATH=/opt/airflow && python /opt/airflow/scripts/extract/customers.py'
+        python_callable=extract_customer_data,
     )
 
-    t2_agents = BashOperator(
+    t2_agents = PythonOperator(
         task_id='ingest_agents',
-        bash_command='export PYTHONPATH=/opt/airflow && python /opt/airflow/scripts/extract/agents.py'
+        python_callable=extract_agents_data,
     )
 
 
