@@ -11,3 +11,4 @@ sqlalchemy
 apache-airflow-providers-standard
 dbt-snowflake
 snowflake-connector-python
+apache-airflow-providers-snowflake
