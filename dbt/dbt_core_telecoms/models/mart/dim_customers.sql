@@ -1,6 +1,3 @@
-WITH customers AS (
-    SELECT * FROM {{ ref('stg_customers') }}
-)
 
 SELECT
     customer_id,
@@ -14,4 +11,4 @@ SELECT
     DATEDIFF(day, signup_date, CURRENT_DATE()) AS tenure_days,
     source_extracted_at,
     snowflake_loaded_at
-FROM customers
+FROM {{ ref('stg_customers') }} ;
