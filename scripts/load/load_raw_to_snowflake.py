@@ -1,5 +1,6 @@
 from scripts.connection.snowflake import get_snowflake_connection
 from scripts.common.constant import Constant
+import logging
 
 def copy_data_from_s3_to_snowflake(table_name, s3_folder, database, schema):
     conn = get_snowflake_connection(database=database, schema=schema)
@@ -11,7 +12,7 @@ def copy_data_from_s3_to_snowflake(table_name, s3_folder, database, schema):
     # THE column data has the datatype VARIANT which allows it to store ALL FORMS of data types
 
     try:
-        print(f"Loading {table_name} from {s3_folder} s3 folder.")
+        logging.info(f"Loading {table_name} from {s3_folder} s3 folder.")
         
         # this query is basically saying, load into the table using the source s3 bucket, and open the parquet file, 
         # and load each row of the parquet into the data column, and then store the snowflake load time
@@ -29,10 +30,10 @@ def copy_data_from_s3_to_snowflake(table_name, s3_folder, database, schema):
         cursor.execute(query)
         result = cursor.fetchall()
         
-        print(f"Result: {result[0]}")
+        logging.info(f"Result: {result[0]}")
         
     except Exception as e:
-        print(f"Error loading {table_name}: {e}")
+        logging.info(f"Error loading {table_name}: {e}")
         raise e
     finally:
         cursor.close()

@@ -1,5 +1,8 @@
 import boto3
 from scripts.common.constant import Constant
+import logging
+
+
 class AWSClient:
     def __init__(self, region="eu-north-1"):
         self.region = region
@@ -17,8 +20,8 @@ class AWSClient:
             )
             return response['Parameter']['Value']
         except Exception as e:
-            print(f"Error fetching parameter {param_name}: {e}")
-            raise e
+            logging.info(f"Error fetching parameter {param_name}: {e}")
+            raise ResourceWarning(f"Could not connect to AWS SMM, {e}")
 
     def get_source_s3_client(self):
         """
@@ -27,7 +30,7 @@ class AWSClient:
         if self._source_s3_client:
             return self._source_s3_client
 
-        print("Authenticating with Source Account...")
+        logging.info("Authenticating with Source Account...")
         access_key = Constant.SOURCE_AWS_ACCESS_KEY_ID
         secret_key = Constant.SOURCE_AWS_SECRET_ACCESS_KEY
         try:
@@ -40,5 +43,5 @@ class AWSClient:
             return self._source_s3_client
         
         except Exception as e:
-            print(f"Error authenticating with Source Account: {e}")
-            raise e
+            logging.info(f"Error authenticating with Source Account: {e}")
+            raise ResourceWarning(f"Could not connect to Source AWS S3, {e}")

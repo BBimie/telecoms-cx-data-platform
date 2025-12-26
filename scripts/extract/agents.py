@@ -4,6 +4,7 @@ from datetime import datetime
 from scripts.common.constant import Constant
 import io
 from scripts.connection.aws import AWSClient
+import logging
 
 
 # ## configs ####
@@ -20,11 +21,11 @@ def extract_agents_data():
 
 	try:
 		#intialize gspread
-		print('Initializing gspread client')
+		logging.info('Initializing gspread client')
 		gc_client = gspread.service_account(GOOGLE_CREDENTIALS_PATH)
 
 		#open sheet
-		print("Open Agents Google sheet")
+		logging.info("Open Agents Google sheet")
 		workbook = gc_client.open_by_key(SOURCE_AGENTS_SHEET_ID)
 		agent_sheet = workbook.worksheet("agents")
 
@@ -34,9 +35,9 @@ def extract_agents_data():
 		#adding load time metadata tracking 
 		agents_df['_data_load_time'] = datetime.now()
 		
-		print(f"Agent data columns: {agents_df.columns}")
-		print(f"Agent data shape: {agents_df.shape}")
-		print(f"Agent data head: {agents_df.head()}")
+		logging.info(f"Agent data columns: {agents_df.columns}")
+		logging.info(f"Agent data shape: {agents_df.shape}")
+		logging.info(f"Agent data head: {agents_df.head()}")
 
 	
 		# save dataframe to parquet
@@ -45,17 +46,18 @@ def extract_agents_data():
 
 
 		#pushing to datalake 
-		print(f"Pushing to {DESTINATION_DATA_LAKE}")
+		logging.info(f"Pushing to {DESTINATION_DATA_LAKE}")
 		AWSClient().local_s3.put_object(
 			Bucket=DESTINATION_DATA_LAKE,
 			Key=DESTINATION_AGENT_KEY,
 			Body=out_buffer.getvalue()
 		)
 
-		print(f"Agent data ingested successfully!")
+		logging.info(f"Agent data ingested successfully!")
 	
 	except Exception as e:
-		print(f"Could not get agent data, {e}")
+		logging.info(f"Could not get agent data, {e}")
+		raise RuntimeError(f"Pipeline Halt: Unable to get Agents Data from google sheet, {e}")
 
 
 if __name__ == "__main__":

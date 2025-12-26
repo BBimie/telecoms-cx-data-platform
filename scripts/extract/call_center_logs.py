@@ -5,6 +5,7 @@ import pandas as pd
 from datetime import datetime
 import os
 from scripts.common.util import get_existing_files
+import logging
 
 # Let's check the root first to find the folder name
 SOURCE_DATA_LAKE = Constant.SOURCE_DATA_LAKE
@@ -17,16 +18,16 @@ def extract_call_center_logs():
     source_client = AWSClient().get_source_s3_client()
     destination_s3_client = AWSClient().local_s3
 
-    print(f"Starting Incremental Ingestion: Call Center Logs")
+    logging.info(f"Starting Incremental Ingestion: Call Center Logs")
 
     try:
         # GET ALREADY PROCESSED FILES
-        print("Checking destination for existing files")
+        logging.info("Checking destination for existing files")
         processed_files = get_existing_files(client = destination_s3_client, 
                                              bucket = DESTINATION_DATA_LAKE,
                                              folder = DESTINATION_FOLDER
                                              )
-        print(f"Found {len(processed_files)} files already processed.")
+        logging.info(f"Found {len(processed_files)} files already processed.")
 
 
         #get list of all files in the 'call logs' dir
@@ -54,7 +55,7 @@ def extract_call_center_logs():
                 continue
 
             #read csv
-            print(f"Reading: {file_key} ...")
+            logging.info(f"Reading: {file_key} ...")
             csv_obj = source_client.get_object(Bucket=Constant.SOURCE_DATA_LAKE, Key=file_key)
             df = pd.read_csv(io.BytesIO(csv_obj['Body'].read()))
 
@@ -66,12 +67,12 @@ def extract_call_center_logs():
             file_name = os.path.basename(file_key).replace('.csv', '.parquet')
             DESTINATION_KEY = f"{DESTINATION_FOLDER}{file_name}"
             
-            print(f"-> Writing to {DESTINATION_KEY}")
+            logging.info(f"-> Writing to {DESTINATION_KEY}")
             out_buffer = io.BytesIO()
             df.to_parquet(out_buffer, index=False)
 
             #pushing to datalake 
-            print(f"Pushing to {DESTINATION_DATA_LAKE}")
+            logging.info(f"Pushing to {DESTINATION_DATA_LAKE}")
             destination_s3_client.put_object(
                 Bucket=DESTINATION_DATA_LAKE,
                 Key=DESTINATION_KEY,
@@ -80,10 +81,11 @@ def extract_call_center_logs():
 
             new_files_count += 1
         
-        print(f"All {new_files_count} call logs data ingested successfully!")
+        logging.info(f"All {new_files_count} call logs data ingested successfully!")
 
     except Exception as e:
-        print(f"Could not get call center logs, {e}")
+        logging.info(f"Could not get call center logs, {e}")
+        raise RuntimeError(f"Pipeline Halt: Unable to get call center logs, {e}")
 
 if __name__ == "__main__":
     extract_call_center_logs()

@@ -1,6 +1,7 @@
 import urllib.parse
 from sqlalchemy import create_engine
 from scripts.connection.aws import AWSClient
+import logging
 
 class PostgresConnection:
     def __init__(self,):
@@ -22,5 +23,5 @@ class PostgresConnection:
             return create_engine(connection_str)
             
         except Exception as e:
-            print(f"❌ Error creating DB Engine: {e}")
-            raise e
+            logging.info(f"❌ Error creating DB Engine: {e}")
+            raise ConnectionRefusedError(f"Could not connect to Website form DB, {e}")

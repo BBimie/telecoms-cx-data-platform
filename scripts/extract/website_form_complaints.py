@@ -8,6 +8,7 @@ import pandas as pd
 from scripts.common.util import get_existing_files
 from datetime import datetime
 import io
+import logging
 
 DESTINATION_DATA_LAKE = Constant.DESTINATION_DATA_LAKE
 DESTINATION_FOLDER = "raw/website_form_complaints/"
@@ -19,7 +20,7 @@ def table_discovery():
     db_tables = inspect(db_engine).get_table_names(schema=db_schema)
     target_tables = [t for t in db_tables  if t.startswith('web_form_request')]
 
-    print(f"The {db_schema} database has {len(target_tables)} tables containing customer complaints.")
+    logging.info(f"The {db_schema} database has {len(target_tables)} tables containing customer complaints.")
 
     return target_tables
 
@@ -33,41 +34,45 @@ def extract_web_form_complaints():
                                          bucket = DESTINATION_DATA_LAKE,
                                          folder = DESTINATION_FOLDER
                                         )
-    new_tables_count = 0
-    with db_engine.connect() as conn:
-        for table_name in target_tables:
-            print("Running incremental load of tables. NEW TABLES ONLY")
-            if table_name in processed_files:
-                #skip table
-                continue
+    try:
+        new_tables_count = 0
+        with db_engine.connect() as conn:
+            for table_name in target_tables:
+                logging.info("Running incremental load of tables. NEW TABLES ONLY")
+                if table_name in processed_files:
+                    #skip table
+                    continue
 
-            query = text(f"SELECT * FROM {db_schema}.{table_name}")
-            df = pd.read_sql(sql=query, con=conn)
+                query = text(f"SELECT * FROM {db_schema}.{table_name}")
+                df = pd.read_sql(sql=query, con=conn)
 
-            # add metadata
-            df['_data_load_time'] = datetime.now()
-            df['_source_table'] = os.path.basename(table_name)
+                # add metadata
+                df['_data_load_time'] = datetime.now()
+                df['_source_table'] = os.path.basename(table_name)
 
+                # write data to parquet
+                file_name = os.path.basename(f'{table_name}.parquet')
+                DESTINATION_KEY = f"{DESTINATION_FOLDER}{file_name}"
+                
+                logging.info(f"-> Writing to {DESTINATION_KEY}")
+                out_buffer = io.BytesIO()
+                df.to_parquet(out_buffer, index=False)
 
-            # write data to parquet
-            file_name = os.path.basename(f'{table_name}.parquet')
-            DESTINATION_KEY = f"{DESTINATION_FOLDER}{file_name}"
+                # #pushing to datalake 
+                logging.info(f"Pushing to {DESTINATION_DATA_LAKE}")
+                destination_s3_client.put_object(
+                    Bucket=DESTINATION_DATA_LAKE,
+                    Key=DESTINATION_KEY,
+                    Body=out_buffer.getvalue()
+                )
+
+                new_tables_count += 1
             
-            print(f"-> Writing to {DESTINATION_KEY}")
-            out_buffer = io.BytesIO()
-            df.to_parquet(out_buffer, index=False)
-
-            # #pushing to datalake 
-            print(f"Pushing to {DESTINATION_DATA_LAKE}")
-            destination_s3_client.put_object(
-                Bucket=DESTINATION_DATA_LAKE,
-                Key=DESTINATION_KEY,
-                Body=out_buffer.getvalue()
-            )
-
-            new_tables_count += 1
-        
-        print(f"Successfully ingested {new_tables_count} new tables from website form complaints databases")
+            logging.info(f"Successfully ingested {new_tables_count} new tables from website form complaints databases")
+            
+    except Exception as e:
+        logging.info(f"Could not get websit form data, {e}")
+        raise RuntimeError(f"Pipeline Halt: Unable to ingest website form data, {e}")
 
 
 if __name__ == "__main__":

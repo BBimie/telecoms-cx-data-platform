@@ -5,6 +5,7 @@ import pandas as pd
 from datetime import datetime
 import os
 from scripts.common.util import get_existing_files
+import logging
 
 # Let's check the root first to find the folder name
 SOURCE_DATA_LAKE = Constant.SOURCE_DATA_LAKE
@@ -17,16 +18,16 @@ def extract_social_media_complaint():
     source_client = AWSClient().get_source_s3_client()
     destination_s3_client = AWSClient().local_s3
 
-    print(f"Starting Incremental Ingestion: Social Media Complaints")
+    logging.info(f"Starting Incremental Ingestion: Social Media Complaints")
 
     try:
         # GET ALREADY PROCESSED FILES
-        print("Checking destination for existing files")
+        logging.info("Checking destination for existing files")
         processed_files = get_existing_files(client = destination_s3_client, 
                                              bucket = DESTINATION_DATA_LAKE,
                                              folder = DESTINATION_FOLDER
                                              )
-        print(f"Found {len(processed_files)} files already processed.")
+        logging.info(f"Found {len(processed_files)} files already processed.")
 
 
         #get list of all files in the 'call logs' dir
@@ -34,7 +35,7 @@ def extract_social_media_complaint():
             Bucket=Constant.SOURCE_DATA_LAKE, 
             Prefix=SOURCE_FOLDER
         )
-        print(response)
+        logging.info(response)
         
         #loop through all the dictionaries in Contents and get 'Key'
         new_files_count = 0
@@ -55,7 +56,7 @@ def extract_social_media_complaint():
                 continue
 
             #read json
-            print(f"Reading: {file_key}")
+            logging.info(f"Reading: {file_key}")
             json_obj = source_client.get_object(Bucket=Constant.SOURCE_DATA_LAKE, Key=file_key)
             df = pd.read_json(io.BytesIO(json_obj['Body'].read()))
 
@@ -67,12 +68,12 @@ def extract_social_media_complaint():
             file_name = os.path.basename(file_key).replace('.json', '.parquet')
             DESTINATION_KEY = f"{DESTINATION_FOLDER}{file_name}"
             
-            print(f"-> Writing to {DESTINATION_KEY}")
+            logging.info(f"-> Writing to {DESTINATION_KEY}")
             out_buffer = io.BytesIO()
             df.to_parquet(out_buffer, index=False)
 
             #pushing to datalake 
-            print(f"Pushing to {DESTINATION_DATA_LAKE}")
+            logging.info(f"Pushing to {DESTINATION_DATA_LAKE}")
             destination_s3_client.put_object(
                 Bucket=DESTINATION_DATA_LAKE,
                 Key=DESTINATION_KEY,
@@ -81,10 +82,11 @@ def extract_social_media_complaint():
 
             new_files_count += 1
         
-        print(f"All {new_files_count} social media complaints data ingested successfully!")
+        logging.info(f"All {new_files_count} social media complaints data ingested successfully!")
 
     except Exception as e:
-        print(f"Could not get social media complaints data, {e}")
+        logging.info(f"Could not get social media complaints data, {e}")
+        raise RuntimeError(f"Pipeline Halt: Unable to ingest social media complaints data, {e}")
 
 if __name__ == "__main__":
     extract_social_media_complaint()
