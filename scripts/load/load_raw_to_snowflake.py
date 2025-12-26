@@ -25,8 +25,7 @@ def copy_data_from_s3_to_snowflake(table_name, s3_folder, database, schema):
             )
             FILE_FORMAT = (FORMAT_NAME = '{database}.{schema}.PARQUET_FORMAT')
             ON_ERROR = 'CONTINUE'; 
-        """
-        
+        """        
         cursor.execute(query)
         result = cursor.fetchall()
         
