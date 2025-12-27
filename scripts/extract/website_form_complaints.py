@@ -60,16 +60,16 @@ def extract_web_form_complaints():
 
                     #generate file name
                     file_name = f"{table_name}_chunk_{counter}.parquet"
-                    DESTINATION_KEY = f"{DESTINATION_FOLDER}{file_name}"
+                    CHUNK_DESTINATION_KEY = f"{DESTINATION_FOLDER}{file_name}"
                     
-                    logging.info(f"Uploading chunk {counter} to {DESTINATION_KEY}")
+                    logging.info(f"Uploading chunk {counter} to {CHUNK_DESTINATION_KEY}")
                     
                     out_buffer = io.BytesIO()
                     website_form_chunk_df.to_parquet(out_buffer, index=False)
 
                     destination_s3_client.put_object(
                         Bucket=DESTINATION_DATA_LAKE,
-                        Key=DESTINATION_KEY,
+                        Key=CHUNK_DESTINATION_KEY,
                         Body=out_buffer.getvalue()
                     )
                     

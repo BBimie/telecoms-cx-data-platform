@@ -7,7 +7,7 @@ import logging
 
 #configs
 CUSTOMER_DATA_SOURCE_KEY = "customers/customers_dataset.csv"
-DESTINATION_KEY = "raw/customers/customers.parquet"
+DESTINATION_FOLDER = "raw/customers/"
 DESTINATION_DATA_LAKE=Constant.DESTINATION_DATA_LAKE
 CHUNK_SIZE=Constant.CHUNK_SIZE
 destination_s3_client=AWSClient().local_s3
@@ -35,17 +35,17 @@ def extract_customer_data():
 
             # use unique filename for this chunk using the base calllog file name
             chunk_filename = f"customer_chunk_{counter}.parquet"
-            DESTINATION_KEY = f"{DESTINATION_KEY}{chunk_filename}"
+            CHUNK_DESTINATION_KEY = f"{DESTINATION_FOLDER}{chunk_filename}"
             
             # Write chunk to buffer
             out_buffer = io.BytesIO()
             customer_chunk_df.to_parquet(out_buffer, index=False)
 
             # Push chunk to datalake
-            logging.info(f"Writing to {DESTINATION_KEY}")
+            logging.info(f"Writing to {CHUNK_DESTINATION_KEY}")
             destination_s3_client.put_object(
                 Bucket=DESTINATION_DATA_LAKE,
-                Key=DESTINATION_KEY,
+                Key=CHUNK_DESTINATION_KEY,
                 Body=out_buffer.getvalue()
             )
 

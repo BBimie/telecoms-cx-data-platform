@@ -71,17 +71,17 @@ def extract_social_media_complaint():
 
                 #generate parquet filename
                 chunk_filename = f"{file_stem}_chunk_{counter}.parquet"
-                DESTINATION_KEY = f"{DESTINATION_FOLDER}{chunk_filename}"
+                CHUNK_DESTINATION_KEY = f"{DESTINATION_FOLDER}{chunk_filename}"
                 
                 #save data to parquet
                 out_buffer = io.BytesIO()
                 social_media_chunk_df.to_parquet(out_buffer, index=False)
 
                 # push to s3
-                logging.info(f"Uploading chunk {counter} to {DESTINATION_KEY}")
+                logging.info(f"Uploading chunk {counter} to {CHUNK_DESTINATION_KEY}")
                 destination_s3_client.put_object(
                     Bucket=DESTINATION_DATA_LAKE,
-                    Key=DESTINATION_KEY,
+                    Key=CHUNK_DESTINATION_KEY,
                     Body=out_buffer.getvalue()
                 )
                 
