@@ -73,7 +73,7 @@ def extract_web_form_complaints():
                         Body=out_buffer.getvalue()
                     )
                     
-                    chunk_counter += 1
+                    counter += 1
 
                 if has_data:
                     new_tables_count += 1

@@ -85,7 +85,7 @@ def extract_social_media_complaint():
                     Body=out_buffer.getvalue()
                 )
                 
-                chunk_counter += 1
+                counter += 1
 
             new_files_count += 1
         
