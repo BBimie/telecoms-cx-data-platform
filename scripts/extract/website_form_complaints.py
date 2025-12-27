@@ -62,7 +62,7 @@ def extract_web_form_complaints():
                     file_name = f"{table_name}_chunk_{counter}.parquet"
                     DESTINATION_KEY = f"{DESTINATION_FOLDER}{file_name}"
                     
-                    logging.info(f"Uploading chunk {chunk_counter} to {DESTINATION_KEY}")
+                    logging.info(f"Uploading chunk {counter} to {DESTINATION_KEY}")
                     
                     out_buffer = io.BytesIO()
                     website_form_chunk_df.to_parquet(out_buffer, index=False)
