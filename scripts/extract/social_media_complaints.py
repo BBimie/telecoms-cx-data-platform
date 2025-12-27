@@ -78,14 +78,14 @@ def extract_social_media_complaint():
                 social_media_chunk_df.to_parquet(out_buffer, index=False)
 
                 # push to s3
-                logging.info(f"Uploading chunk {chunk_counter} to {DESTINATION_KEY}")
+                logging.info(f"Uploading chunk {counter} to {DESTINATION_KEY}")
                 destination_s3_client.put_object(
                     Bucket=DESTINATION_DATA_LAKE,
                     Key=DESTINATION_KEY,
                     Body=out_buffer.getvalue()
                 )
                 
-                chunk_counter += 1
+                counter += 1
 
             new_files_count += 1
         
