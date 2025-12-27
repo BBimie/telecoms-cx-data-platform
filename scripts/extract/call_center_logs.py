@@ -70,17 +70,17 @@ def extract_call_center_logs():
 
                 # use unique filename for this chunk using the base calllog file name
                 chunk_filename = f"{file_stem}_chunk_{counter}.parquet"
-                DESTINATION_KEY = f"{DESTINATION_FOLDER}{chunk_filename}"
+                CHUNK_DESTINATION_KEY = f"{DESTINATION_FOLDER}{chunk_filename}"
                 
                 # Write chunk to buffer
                 out_buffer = io.BytesIO()
                 call_log_chunk_df.to_parquet(out_buffer, index=False)
 
                 # Push chunk to datalake
-                logging.info(f"Writing to {DESTINATION_KEY}")
+                logging.info(f"Writing to {CHUNK_DESTINATION_KEY}")
                 destination_s3_client.put_object(
                     Bucket=DESTINATION_DATA_LAKE,
-                    Key=DESTINATION_KEY,
+                    Key=CHUNK_DESTINATION_KEY,
                     Body=out_buffer.getvalue()
                 )
                 
