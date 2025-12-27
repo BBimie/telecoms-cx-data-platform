@@ -12,6 +12,7 @@ SOURCE_DATA_LAKE = Constant.SOURCE_DATA_LAKE
 SOURCE_FOLDER = "call logs/"
 DESTINATION_DATA_LAKE = Constant.DESTINATION_DATA_LAKE
 DESTINATION_FOLDER = "raw/call_center_logs/"
+CHUNK_SIZE = Constant.CHUNK_SIZE
 
 
 def extract_call_center_logs():
@@ -48,7 +49,7 @@ def extract_call_center_logs():
 
             # Check if we already have this file
             filename = os.path.basename(file_key)
-            file_stem = os.path.splitext(filename)[0]
+            file_stem = os.path.splitext(filename)[0] #removes the extension
 
             if file_stem in processed_files:
                 #skip file, it has been previously ingested
@@ -57,27 +58,34 @@ def extract_call_center_logs():
             #read csv
             logging.info(f"Reading: {file_key} ...")
             csv_obj = source_client.get_object(Bucket=Constant.SOURCE_DATA_LAKE, Key=file_key)
-            df = pd.read_csv(io.BytesIO(csv_obj['Body'].read()))
 
-            # add metadata
-            df['_data_load_time'] = datetime.now()
-            df['_source_file'] = os.path.basename(file_key)
+            #iterate ove the boto csv object in chunks
+            csv_chunk = pd.read_csv(io.BytesIO(csv_obj['Body']), chunksize=CHUNK_SIZE) 
+            counter = 1
 
-            # write data to parquet
-            file_name = os.path.basename(file_key).replace('.csv', '.parquet')
-            DESTINATION_KEY = f"{DESTINATION_FOLDER}{file_name}"
-            
-            logging.info(f"-> Writing to {DESTINATION_KEY}")
-            out_buffer = io.BytesIO()
-            df.to_parquet(out_buffer, index=False)
+            for call_log_chunk_df in csv_chunk:
+                # add metadata to this specific chunk
+                call_log_chunk_df['_data_load_time'] = datetime.now()
+                call_log_chunk_df['_source_file'] = filename
 
-            #pushing to datalake 
-            logging.info(f"Pushing to {DESTINATION_DATA_LAKE}")
-            destination_s3_client.put_object(
-                Bucket=DESTINATION_DATA_LAKE,
-                Key=DESTINATION_KEY,
-                Body=out_buffer.getvalue()
-            )
+                # use unique filename for this chunk using the base calllog file name
+                chunk_filename = f"{file_stem}_chunk_{counter}.parquet"
+                DESTINATION_KEY = f"{DESTINATION_FOLDER}{chunk_filename}"
+                
+                # Write chunk to buffer
+                out_buffer = io.BytesIO()
+                call_log_chunk_df.to_parquet(out_buffer, index=False)
+
+                # Push chunk to datalake
+                logging.info(f"Writing to {DESTINATION_KEY}")
+                destination_s3_client.put_object(
+                    Bucket=DESTINATION_DATA_LAKE,
+                    Key=DESTINATION_KEY,
+                    Body=out_buffer.getvalue()
+                )
+                
+                #prepare for next chunk
+                counter += 1
 
             new_files_count += 1
         

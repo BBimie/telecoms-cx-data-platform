@@ -8,34 +8,52 @@ import logging
 #configs
 CUSTOMER_DATA_SOURCE_KEY = "customers/customers_dataset.csv"
 DESTINATION_KEY = "raw/customers/customers.parquet"
+DESTINATION_DATA_LAKE=Constant.DESTINATION_DATA_LAKE
+CHUNK_SIZE=Constant.CHUNK_SIZE
+destination_s3_client=AWSClient().local_s3
 
 def extract_customer_data():
     aws = AWSClient()
     source_client = aws.get_source_s3_client()
     try:
         logging.info(f"Reading from Customer data from source, {Constant.SOURCE_DATA_LAKE} ")
-        obj = source_client.get_object(Bucket=Constant.SOURCE_DATA_LAKE, 
+        csv_obj = source_client.get_object(Bucket=Constant.SOURCE_DATA_LAKE, 
                                        Key=CUSTOMER_DATA_SOURCE_KEY)
-        df = pd.read_csv(io.BytesIO(obj['Body'].read()))
-
-        logging.info(f"Customer data columns: {df.columns}")
-        logging.info(f"Customer data shape: {df.shape}")
-        logging.info(f"Customer data head: {df.head()}")
-
-        #adding load time metadata tracking 
-        df['_data_load_time'] = datetime.now()
         
-        #writing to to parquet
-        logging.info("Writing to customer data to Parquet")
-        out_buffer = io.BytesIO()
-        df.to_parquet(out_buffer, index=False)
-        
-        aws.local_s3.put_object(
-            Bucket=Constant.DESTINATION_DATA_LAKE,
-            Key=DESTINATION_KEY,
-            Body=out_buffer.getvalue()
-        )
+        #iterate ove the boto csv object in chunks
+        csv_chunk = pd.read_csv(io.BytesIO(csv_obj['Body']), chunksize=CHUNK_SIZE) 
+        counter = 1
+
+        for customer_chunk_df in csv_chunk:
+
+            #run customer data overview once
+            if counter == 1:
+                logging.info(f"Customer chunk data columns: {customer_chunk_df.columns}")
+
+            #adding load time metadata tracking to this chunk
+            customer_chunk_df['_data_load_time'] = datetime.now()
+
+            # use unique filename for this chunk using the base calllog file name
+            chunk_filename = f"customer_chunk_{counter}.parquet"
+            DESTINATION_KEY = f"{DESTINATION_KEY}{chunk_filename}"
+            
+            # Write chunk to buffer
+            out_buffer = io.BytesIO()
+            customer_chunk_df.to_parquet(out_buffer, index=False)
+
+            # Push chunk to datalake
+            logging.info(f"Writing to {DESTINATION_KEY}")
+            destination_s3_client.put_object(
+                Bucket=DESTINATION_DATA_LAKE,
+                Key=DESTINATION_KEY,
+                Body=out_buffer.getvalue()
+            )
+
+            #prepare for next chunk
+            counter += 1
+
         logging.info("Ingestion Complete!")
+        
     except Exception as e:
         logging.info(f"Could not ingest customer data, {e}")
         raise RuntimeError(f"Pipeline Halt: Unable to ingest customer data, {e}")
