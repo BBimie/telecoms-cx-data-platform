@@ -10,3 +10,4 @@ google_secret.json
 logs
 config
 plugins
+main.py

@@ -14,6 +14,7 @@ DESTINATION_DATA_LAKE = Constant.DESTINATION_DATA_LAKE
 DESTINATION_FOLDER = "raw/website_form_complaints/"
 db_engine = PostgresConnection().website_forms_engine()
 db_schema = AWSClient().get_secret(param_name='/coretelecoms/db/schema')
+CHUNK_SIZE = Constant.CHUNK_SIZE
 
 def table_discovery():
     #sqlalchemy method that returns list of tables in the db
@@ -44,29 +45,38 @@ def extract_web_form_complaints():
                     continue
 
                 query = text(f"SELECT * FROM {db_schema}.{table_name}")
-                df = pd.read_sql(sql=query, con=conn)
+                chunk_df = pd.read_sql(sql=query, con=conn, chunksize=CHUNK_SIZE)
 
-                # add metadata
-                df['_data_load_time'] = datetime.now()
-                df['_source_table'] = os.path.basename(table_name)
-
-                # write data to parquet
-                file_name = os.path.basename(f'{table_name}.parquet')
-                DESTINATION_KEY = f"{DESTINATION_FOLDER}{file_name}"
+                counter = 1
+                has_data = False
                 
-                logging.info(f"-> Writing to {DESTINATION_KEY}")
-                out_buffer = io.BytesIO()
-                df.to_parquet(out_buffer, index=False)
+                #loop thrugh the chunk iterator
+                for website_form_chunk_df in chunk_df:
+                    has_data = True
+                    
+                    # add metadata to each chunk
+                    website_form_chunk_df['_data_load_time'] = datetime.now()
+                    website_form_chunk_df['_source_table'] = table_name
 
-                # #pushing to datalake 
-                logging.info(f"Pushing to {DESTINATION_DATA_LAKE}")
-                destination_s3_client.put_object(
-                    Bucket=DESTINATION_DATA_LAKE,
-                    Key=DESTINATION_KEY,
-                    Body=out_buffer.getvalue()
-                )
+                    #generate file name
+                    file_name = f"{table_name}_chunk_{counter}.parquet"
+                    DESTINATION_KEY = f"{DESTINATION_FOLDER}{file_name}"
+                    
+                    logging.info(f"Uploading chunk {chunk_counter} to {DESTINATION_KEY}")
+                    
+                    out_buffer = io.BytesIO()
+                    website_form_chunk_df.to_parquet(out_buffer, index=False)
 
-                new_tables_count += 1
+                    destination_s3_client.put_object(
+                        Bucket=DESTINATION_DATA_LAKE,
+                        Key=DESTINATION_KEY,
+                        Body=out_buffer.getvalue()
+                    )
+                    
+                    chunk_counter += 1
+
+                if has_data:
+                    new_tables_count += 1
             
             logging.info(f"Successfully ingested {new_tables_count} new tables from website form complaints databases")
             
